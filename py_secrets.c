@@ -26,7 +26,7 @@ static char zero_str_doc[] =
 ;
 
 static char zero_bytes_doc[] = 
-    "Zeroes out bytes content from memory.\n\n:param str: Bytes to be zeroed.\n:returns: Exit code None type if the operation was successful."
+    "Zeroes out bytes content from memory.\n\n:param bytes: Bytes to be zeroed.\n:returns: Exit code None type if the operation was successful."
 ;
 
 static char zero_int_doc[] = 
