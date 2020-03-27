@@ -85,6 +85,7 @@ int c_zero_int(PyObject* integer) {
 
 static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
 
+    Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
@@ -101,6 +102,7 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
 
     switch (error) {
         case 0:
+            Py_DecRef(arg);
             Py_RETURN_NONE;
             break;
         case 1:
@@ -123,6 +125,7 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
             strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
+    Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message);
     return NULL;
@@ -132,6 +135,7 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
 
 static PyObject* zero_str(PyObject* self, PyObject* arg) {
 
+    Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
@@ -148,6 +152,7 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
 
     switch (error) {
         case 0:
+            Py_DecRef(arg);
             Py_RETURN_NONE;
             break;
         case 1:
@@ -170,6 +175,7 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
             strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
+    Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message);
     return NULL;
@@ -177,6 +183,7 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
 
 static PyObject* zero_int(PyObject* self, PyObject* arg) {
 
+    Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
@@ -193,11 +200,12 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
 
     switch (error) {
         case 0:
+            Py_DecRef(arg);
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) malloc(sizeof("Argument isn't str type. ") + 1);
-            strcpy(message, "Argument isn't str type. ");
+            message = (char *) malloc(sizeof("Argument isn't int type. ") + 1);
+            strcpy(message, "Argument isn't int type. ");
             type = PyExc_ValueError;
             break;
         case 2:
@@ -220,6 +228,7 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
             strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
+    Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message);
     return NULL;
