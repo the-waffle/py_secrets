@@ -26,7 +26,7 @@ static char zero_str_doc[] =
 ;
 
 static char zero_bytes_doc[] = 
-    "Zeroes out bytes content from memory.\n\n:param bytes: Bytes to be zeroed.\n:returns: Exit code None type if the operation was successful."
+    "Zeroes out bytes content from memory.\n\n:param str: Bytes to be zeroed.\n:returns: Exit code None type if the operation was successful."
 ;
 
 static char zero_int_doc[] = 
@@ -39,27 +39,61 @@ static PyObject* version(PyObject* self) {
     return Py_BuildValue("s", "Alpha 0.01");
 }
 
-/* Function declaration */
+/* C Function declaration */
 
 int c_zero_str(PyObject* string) {
 
+/* Zeroes out a str object.
+ * 
+ * The function uses the ob_size of the object to determine 
+ * the size of the object to be zeroed out and finds the empty 
+ * struct size of the object to find the offset of the values 
+ * in memory. 
+ * 
+ * The function checks for zero length argument and arguments
+ * that will cause an integer overflow when used to determine
+ * the size of the memory block to be memset.  
+ */
+
+    // Checks for zero length. 
     if (ob_size(string)==str_struct_buff) 
         return 3;
 
-    long long addr = (long long) string + str_struct_buff - 1;
-    long long clr_size = ob_size(string) * str_buff + 1;
+    // Checks for potential overflow. 
+    if (ob_size(string) > sizeof(unsigned long long) / str_buff)
+        return 4;
 
+    unsigned long long addr = (unsigned long long) string + str_struct_buff - 1;
+    unsigned long long clr_size = ob_size(string) * str_buff + 1;
+    
     memset(addr, 0, clr_size);
     return 0;
 }
 
 int c_zero_bytes(PyObject* bytes) {
 
+/* Zeroes out a bytes object.
+ * 
+ * The function uses the ob_size of the object to determine 
+ * the size of the object to be zeroed out and finds the empty 
+ * struct size of the object to find the offset of the values 
+ * in memory. 
+ * 
+ * The function checks for zero length argument and arguments
+ * that will cause an integer overflow when used to determine
+ * the size of the memory block to be memset. 
+ */
+
+    // Checks for zero length. 
     if (ob_size(bytes)==bytes_struct_buff)
         return 3;
 
-    long long addr = (long long) bytes + bytes_struct_buff - 1;
-    long long clr_size = ob_size(bytes) * bytes_buff + 1;
+    // Checks for potential overflow. 
+    if (ob_size(bytes) > sizeof(unsigned long long) / bytes_buff)
+        return 4;
+
+    unsigned long long addr = (long long) bytes + bytes_struct_buff - 1;
+    unsigned long long clr_size = ob_size(bytes) * bytes_buff + 1;
 
     memset(addr, 0, clr_size);
     return 0;
@@ -67,14 +101,32 @@ int c_zero_bytes(PyObject* bytes) {
 
 int c_zero_int(PyObject* integer) {
 
+/* Zeroes out a bytes object.
+ * 
+ * The function uses the ob_size of the object to determine 
+ * the size of the object to be zeroed out and finds the empty 
+ * struct size of the object to find the offset of the values 
+ * in memory. 
+ * 
+ * The function checks for cached values, negative/signed integers 
+ * and arguments that will cause an integer overflow when used to 
+ * determine the size of the memory block to be memset. 
+ */
+
+    // Checks for signed values. 
     if (PyObject_RichCompare(integer, Py_BuildValue("i", 0), Py_LT)==Py_True)
         return 4;
 
+    // Checks for cached values. 
     if (PyObject_RichCompare(integer, Py_BuildValue("i", 256), Py_LE)==Py_True)
         return 3;
 
-    long long addr = (long long) integer + long_struct_buff;
-    long long clr_size = ob_size(integer) * long_buff;
+    // Checks for potential overflow. 
+    if (ob_size(integer) > sizeof(unsigned long long) / long_buff)
+        return 5;
+
+    unsigned long long addr = (unsigned long long) integer + long_struct_buff;
+    unsigned long long clr_size = ob_size(integer) * long_buff;
 
     memset(addr, 0, clr_size);
     return 0;
@@ -85,17 +137,27 @@ int c_zero_int(PyObject* integer) {
 
 static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
 
+/* Zeroes out a bytes object.
+ * 
+ * This is a wrapper function that calls a C function to 
+ * zero out the bytes object in memory. It is recommended that 
+ * the object is then put through the del statement after being 
+ * zeroed out to be collected by Python GC.
+ * 
+ * Object type checks and null arguments are done here. 
+ */
+
     Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
 
-    /* Check if args is str. */
-
     if (PyBytes_Check(arg)!=1)
+        // Checks for arg object type.
         error = 1;
     else
         if (arg==NULL)
+            // Checks if arg is null. 
             error = 2;
     else
         error = c_zero_bytes(arg);
@@ -106,46 +168,60 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) malloc(sizeof("Argument isn't bytes type. ") + 1);
-            strcpy(message, "Argument isn't bytes type. ");
+            message = (char *) calloc(1, sizeof("Argument isn't bytes type. "));
+            strncpy(message, "Argument isn't bytes type. ", sizeof("Argument isn't bytes type. "));
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) malloc(sizeof("Argument was NULL. ") + 1);
-            strcpy(message, "Argument was NULL. ");
+            message = (char *) calloc(1, sizeof("Argument was NULL. "));
+            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) malloc(sizeof("Argument was of zero length. ") + 1);
-            strcpy(message, "Argument was of zero length. ");
+            message = (char *) calloc(1, sizeof("Argument was of zero length. "));
+            strncpy(message, "Argument was of zero length. ", sizeof("Argument was of zero length. "));
             type = PyExc_ValueError;
             break;
+        case 4:
+            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
+            strncpy(message, "Argument  will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            type = PyExc_OverflowError;
         default:
-            message = (char *) malloc(sizeof("Unknown exception. ") + 1);
-            strcpy(message, "Unknown exception. ");
+            message = (char *) calloc(1, sizeof("Unknown exception. "));
+            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message);
+    free(message); message = NULL;
+    free(type); type = NULL;
     return NULL;
-
 }
 
 
 static PyObject* zero_str(PyObject* self, PyObject* arg) {
+
+/* Zeroes out a str object.
+ * 
+ * This is a wrapper function that calls a C function to 
+ * zero out the str object in memory. It is recommended that 
+ * the object is then put through the del statement after being 
+ * zeroed out to be collected by Python GC.
+ * 
+ * Object type checks and null arguments are done here. 
+ */
 
     Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
 
-    /* Check if args is str. */
-
     if (PyUnicode_Check(arg)!=1)
+        // Checks for arg object type. 
         error = 1;
     else
         if (arg==NULL)
+            // Checks if arg is null. 
             error = 2;
     else
         error = c_zero_str(arg);
@@ -156,44 +232,59 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) malloc(sizeof("Argument isn't str type. ") + 1);
-            strcpy(message, "Argument isn't str type. ");
+            message = (char *) calloc(1, sizeof("Argument isn't str type. "));
+            strncpy(message, "Argument isn't str type. ", sizeof("Argument isn't str type. "));
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) malloc(sizeof("Argument was NULL. ") + 1);
-            strcpy(message, "Argument was NULL. ");
+            message = (char *) calloc(1, sizeof("Argument was NULL. "));
+            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) malloc(sizeof("Argument was of zero length. ") + 1);
-            strcpy(message, "Argument was of zero length. ");
+            message = (char *) calloc(1, sizeof("Argument was of zero length. "));
+            strncpy(message, "Argument was of zero length. ", sizeof("Argument was of zero length. "));
             type = PyExc_ValueError;
             break;
+        case 4:
+            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
+            strncpy(message, "Argument will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            type = PyExc_OverflowError;
         default:
-            message = (char *) malloc(sizeof("Unknown exception. ") + 1);
-            strcpy(message, "Unknown exception. ");
+            message = (char *) calloc(1, sizeof("Unknown exception. "));
+            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message);
+    free(message); message = NULL;
+    free(type); type = NULL;
     return NULL;
 }
 
 static PyObject* zero_int(PyObject* self, PyObject* arg) {
+
+/* Zeroes out a int object.
+ * 
+ * This is a wrapper function that calls a C function to 
+ * zero out the int object in memory. It is recommended that 
+ * the object is then put through the del statement after being 
+ * zeroed out to be collected by Python GC.
+ * 
+ * Object type checks and null arguments are done here. 
+ */
 
     Py_IncRef(arg);
     int error = 0;
     char *message = NULL;
     PyObject *type;
 
-    /* Check if arg is int type */
-
     if (PyLong_Check(arg)!=1)
+        // Checks for arg type. 
         error = 1;
     else 
         if (arg==NULL)
+            // Checks if arg is null. 
             error = 2;
     else
         error = c_zero_int(arg);
@@ -204,33 +295,38 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) malloc(sizeof("Argument isn't int type. ") + 1);
-            strcpy(message, "Argument isn't int type. ");
+            message = (char *) calloc(1, sizeof("Argument isn't int type. "));
+            strncpy(message, "Argument isn't int type. ", sizeof("Argument isn't int type. "));
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) malloc(sizeof("Argument was NULL. ") + 1);
-            strcpy(message, "Argument was NULL. ");
+            message = (char *) calloc(1, sizeof("Argument was NULL. "));
+            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) malloc(sizeof("Argument was a preallocated integer between 0 & 256. ") + 1);
-            strcpy(message, "Argument was a preallocated integer between 0 & 256. ");
+            message = (char *) calloc(1, sizeof("Argument was a preallocated integer between 0 & 256. "));
+            strncpy(message, "Argument was a preallocated integer between 0 & 256. ", sizeof("Argument was a preallocated integer between 0 & 256. "));
             type = PyExc_ValueError;
             break;
         case 4:
-            message = (char *) malloc(sizeof("Argument was a signed integer. ") + 1);
-            strcpy(message, "Argument was a signed integer. ");
+            message = (char *) calloc(1, sizeof("Argument was a signed integer. "));
+            strncpy(message, "Argument was a signed integer. ", sizeof("Argument was a signed integer. "));
             type = PyExc_ValueError;
             break;
+        case 5:
+            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
+            strncpy(message, "Argument will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            type = PyExc_OverflowError;
         default:
-            message = (char *) malloc(sizeof("Unknown exception. ") + 1);
-            strcpy(message, "Unknown exception. ");
+            message = (char *) calloc(1, sizeof("Unknown exception. "));
+            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message);
+    free(message); message = NULL;
+    free(type); type = NULL;
     return NULL;
 }
 
