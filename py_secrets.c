@@ -195,7 +195,7 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
     Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message); message = NULL;
-    free(type); type = NULL;
+    type = NULL;
     return NULL;
 }
 
@@ -259,7 +259,7 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
     Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message); message = NULL;
-    free(type); type = NULL;
+    type = NULL;
     return NULL;
 }
 
@@ -327,7 +327,7 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
     Py_DecRef(arg);
     PyErr_SetString(type, message);
     free(message); message = NULL;
-    free(type); type = NULL;
+    type = NULL;
     return NULL;
 }
 
