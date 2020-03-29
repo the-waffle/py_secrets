@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <limits.h>
 
 /* Macros for accessing PyObject attributes */
 
@@ -60,9 +61,9 @@ int c_zero_str(PyObject* string) {
         return 3;
 
     // Checks for potential overflow. 
-    if (ob_size(string) > sizeof(unsigned long long) / str_buff)
+    if (ob_size(string) > (ULLONG_MAX / str_buff))
         return 4;
-
+    
     unsigned long long addr = (unsigned long long) string + str_struct_buff - 1;
     unsigned long long clr_size = ob_size(string) * str_buff + 1;
     
@@ -89,10 +90,10 @@ int c_zero_bytes(PyObject* bytes) {
         return 3;
 
     // Checks for potential overflow. 
-    if (ob_size(bytes) > sizeof(unsigned long long) / bytes_buff)
+    if (ob_size(bytes) > (ULLONG_MAX / bytes_buff))
         return 4;
 
-    unsigned long long addr = (long long) bytes + bytes_struct_buff - 1;
+    unsigned long long addr = (unsigned long long) bytes + bytes_struct_buff - 1;
     unsigned long long clr_size = ob_size(bytes) * bytes_buff + 1;
 
     memset(addr, 0, clr_size);
@@ -122,7 +123,7 @@ int c_zero_int(PyObject* integer) {
         return 3;
 
     // Checks for potential overflow. 
-    if (ob_size(integer) > sizeof(unsigned long long) / long_buff)
+    if (ob_size(integer) > (ULLONG_MAX / long_buff))
         return 5;
 
     unsigned long long addr = (unsigned long long) integer + long_struct_buff;
