@@ -150,7 +150,7 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
 
     Py_IncRef(arg);
     int error = 0;
-    char *message = NULL;
+    char message[128];
     PyObject *type;
 
     if (PyBytes_Check(arg)!=1)
@@ -169,32 +169,26 @@ static PyObject* zero_bytes(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) calloc(1, sizeof("Argument isn't bytes type. "));
-            strncpy(message, "Argument isn't bytes type. ", sizeof("Argument isn't bytes type. "));
+            strcpy(message, "Argument isn't bytes type. ");
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) calloc(1, sizeof("Argument was NULL. "));
-            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
+            strcpy(message, "Argument was NULL. ");
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) calloc(1, sizeof("Argument was of zero length. "));
-            strncpy(message, "Argument was of zero length. ", sizeof("Argument was of zero length. "));
+            strcpy(message, "Argument was of zero length. ");
             type = PyExc_ValueError;
             break;
         case 4:
-            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
-            strncpy(message, "Argument  will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            strcpy(message, "Argument  will cause integer overflow. ");
             type = PyExc_OverflowError;
         default:
-            message = (char *) calloc(1, sizeof("Unknown exception. "));
-            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
+            strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message); message = NULL;
     type = NULL;
     return NULL;
 }
@@ -214,7 +208,7 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
 
     Py_IncRef(arg);
     int error = 0;
-    char *message = NULL;
+    char message[128];
     PyObject *type;
 
     if (PyUnicode_Check(arg)!=1)
@@ -233,32 +227,26 @@ static PyObject* zero_str(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) calloc(1, sizeof("Argument isn't str type. "));
-            strncpy(message, "Argument isn't str type. ", sizeof("Argument isn't str type. "));
+            strcpy(message, "Argument isn't str type. ");
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) calloc(1, sizeof("Argument was NULL. "));
-            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
+            strcpy(message, "Argument was NULL. ");
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) calloc(1, sizeof("Argument was of zero length. "));
-            strncpy(message, "Argument was of zero length. ", sizeof("Argument was of zero length. "));
+            strcpy(message, "Argument was of zero length. ");
             type = PyExc_ValueError;
             break;
         case 4:
-            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
-            strncpy(message, "Argument will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            strcpy(message, "Argument will cause integer overflow. ");
             type = PyExc_OverflowError;
         default:
-            message = (char *) calloc(1, sizeof("Unknown exception. "));
-            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
+            strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message); message = NULL;
     type = NULL;
     return NULL;
 }
@@ -277,7 +265,7 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
 
     Py_IncRef(arg);
     int error = 0;
-    char *message = NULL;
+    char message[128];
     PyObject *type;
 
     if (PyLong_Check(arg)!=1)
@@ -296,37 +284,30 @@ static PyObject* zero_int(PyObject* self, PyObject* arg) {
             Py_RETURN_NONE;
             break;
         case 1:
-            message = (char *) calloc(1, sizeof("Argument isn't int type. "));
-            strncpy(message, "Argument isn't int type. ", sizeof("Argument isn't int type. "));
+            strcpy(message, "Argument isn't int type. ");
             type = PyExc_ValueError;
             break;
         case 2:
-            message = (char *) calloc(1, sizeof("Argument was NULL. "));
-            strncpy(message, "Argument was NULL. ", sizeof("Argument was NULL. "));
+            strcpy(message, "Argument was NULL. ");
             type = PyExc_ValueError;
             break;
         case 3:
-            message = (char *) calloc(1, sizeof("Argument was a preallocated integer between 0 & 256. "));
-            strncpy(message, "Argument was a preallocated integer between 0 & 256. ", sizeof("Argument was a preallocated integer between 0 & 256. "));
+            strcpy(message, "Argument was a preallocated integer between 0 & 256. ");
             type = PyExc_ValueError;
             break;
         case 4:
-            message = (char *) calloc(1, sizeof("Argument was a signed integer. "));
-            strncpy(message, "Argument was a signed integer. ", sizeof("Argument was a signed integer. "));
+            strcpy(message, "Argument was a signed integer. ");
             type = PyExc_ValueError;
             break;
         case 5:
-            message = (char *) calloc(1, sizeof("Argument will cause integer overflow. "));
-            strncpy(message, "Argument will cause integer overflow. ", sizeof("Argument will cause integer overflow. "));
+            strcpy(message, "Argument will cause integer overflow. ");
             type = PyExc_OverflowError;
         default:
-            message = (char *) calloc(1, sizeof("Unknown exception. "));
-            strncpy(message, "Unknown exception. ", sizeof("Unknown exception. "));
+            strcpy(message, "Unknown exception. ");
             type = PyExc_UserWarning;
     }
     Py_DecRef(arg);
     PyErr_SetString(type, message);
-    free(message); message = NULL;
     type = NULL;
     return NULL;
 }
