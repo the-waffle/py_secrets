@@ -1,7 +1,5 @@
-#include "include/Python.h"
+#include <include/Python.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
 #include <limits.h>
 
 /* Macros for accessing PyObject attributes */
